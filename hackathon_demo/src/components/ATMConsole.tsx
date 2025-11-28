@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ATM_ACK, ATM_PAYLOAD, createATMClient, createATMServer } from "@/services/AudioMessengerService";
+import { ATM_ACK, ATM_PAYLOAD, createATMClient, createATMServer, type SendMode } from "@/services/AudioMessengerService";
 
 type LogLine = { at: string; text: string };
+type Mode = SendMode;
 
 function useLogBuffer() {
   const [lines, setLines] = useState<LogLine[]>([]);
@@ -26,6 +27,7 @@ export function ATMConsole() {
 
   const [clientState, setClientState] = useState("idle");
   const [serverState, setServerState] = useState("idle");
+  const [mode, setMode] = useState<Mode>("plain-70s");
 
   const clientRef = useRef<ReturnType<typeof createATMClient> | null>(null);
   const serverRef = useRef<ReturnType<typeof createATMServer> | null>(null);
@@ -54,21 +56,68 @@ export function ATMConsole() {
     []
   );
 
+  const stateLabel = {
+    "idle": "idle",
+    "sending": "sending",
+    "waiting": "waiting for ACK",
+    "alarm-cleared": "alarm cleared",
+    "timeout": "timeout",
+    "listening": "listening",
+    "hablo-ingles-dtmf": "Hablo Ingles DTMF",
+    "very-broke": "Too broke to send",
+  } as const;
+
   return (
     <div className="w-full max-w-5xl mx-auto grid gap-6 md:grid-cols-2">
       <Card className="rounded-3xl shadow-lg">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <span>ATM Client</span>
-            <span className="text-sm font-normal px-3 py-1 rounded-full bg-muted">State: {clientState}</span>
+            <span className="text-sm font-normal px-3 py-1 rounded-full bg-muted">
+              State: {stateLabel[clientState as keyof typeof stateLabel] ?? clientState}
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+            <span>Run two tabs: one client, one server.</span>
+            <Button variant="outline" size="sm" className="rounded-full" onClick={() => window.open(window.location.href, "_blank")}>
+              Open new tab
+            </Button>
+          </div>
+          <div className="space-y-3">
+            <div className="text-sm font-medium">Choose your appetite for DTMF risk</div>
+            <div className="space-y-1">
+              <input
+                type="range"
+                min={0}
+                max={2}
+                step={1}
+                value={mode === "very-broke" ? 0 : mode === "broke" ? 1 : 2}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setMode(v === 0 ? "very-broke" : v === 1 ? "broke" : "plain-70s");
+                }}
+                className="w-full accent-foreground"
+              />
+              <div className="flex justify-between text-xs font-medium">
+                <span>Very Broke</span>
+                <span>Broke</span>
+                <span>Plain ol&apos; Phone 70s Era</span>
+              </div>
+            </div>
+          </div>
           <p className="text-sm text-muted-foreground">
             Sends the ATM alarm payload once and waits for ACK.
           </p>
           <div className="flex gap-2">
-            <Button className="flex-1 rounded-full" onClick={() => clientRef.current?.start()} disabled={clientState !== "idle"}>
+            <Button
+              className="flex-1 rounded-full"
+              onClick={() => {
+                clientRef.current?.start(mode);
+              }}
+              disabled={clientState !== "idle"}
+            >
               Send ATM
             </Button>
             <Button className="flex-1 rounded-full" variant="outline" onClick={() => clientRef.current?.stop()}>

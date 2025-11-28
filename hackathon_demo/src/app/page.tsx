@@ -7,8 +7,8 @@ export default function Home() {
       <section className="flex flex-col items-center gap-4 text-center">
         <h1 className="text-3xl font-semibold">GibberLink Telecare</h1>
         <p className="text-muted-foreground max-w-3xl">
-          An internal joke project to show how we might “fix” the UK&apos;s broken telecare stack—thousands of aging analog alarm devices still firing DTMF over IP. 
-          Here we spoof a tiny ATM alarm flow over ggwave: one tab acts as the responder (server), the other as the device (client).
+          UK analog telecare alarm failures are a growing concern during the digital phone network switchover. Old analog alarm boxes send DTMF over new IP lines and calls can distort, delay, or simply fail—reported failure rates range from ~2.3%–3.4% up to 5%+. 
+          This project is a spoof. We&apos;re demonstrating ggwave (FSK) as a hypothetical way to ship ATM transmissions across VoIP networks—since industry tones rely on strict timing, which newer networks often deform and break.
         </p>
       </section>
 
