@@ -7,6 +7,8 @@ A proof-of-concept client/server transport that sends **NOWIP telecare XML paylo
 
 This project demonstrates that *audio-FSK modem bursts survive VoIP far better than tightly timed DTMF digit sequences*, which is critical as the UK PSTN becomes fully packetised under BT Digital Voice.
 
+This project is purely for "fun" and not to be taken seriously!
+
 ---
 
 ## 🚨 UK Telecare is stuck in the analogue tone era
