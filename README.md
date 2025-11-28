@@ -1,38 +1,14 @@
 # GibberLink
 
-This demo of two agents switching to a more efficient language went viral in Feb '25. 
+This demo of "client/server" transmissing NOWIP ATM XMLs via ggwave
 
-It won first place on [11labs x a16z international hackathon](https://devpost.com/software/gibber-link) and was covered by [Forbes](https://www.forbes.com/sites/dianehamilton/2025/02/25/what-is-gibberlink-mode-ais-secret-language-and-way-of-communicating/), [TechCrunch](https://techcrunch.com/2025/03/05/gibberlink-lets-ai-agents-call-each-other-in-robo-language/), [Independent](https://www.independent.co.uk/tech/ai-gibberlink-mode-secret-language-b2706351.html) and others.
+## UK telecare is broke
 
-## Demo
-[gbrl.ai](https://www.gbrl.ai/) — Agent2Agent conversation in your browser (use two devices)
+The UK telecare industry has struggled to move away from legacy DTMF alarm protocols. Thousands of analogue field devices still depend on tight, timing‑sensitive DTMF tones to signal distress, leaving them brittle on modern voice networks where slight jitter or codec shifts can garble intent. This project uses ggwave GibberLink to demonstrate carrying alarm traffic via FSK instead of DTMF, making the link more 'resilient' to timing drift and audio mangling across VoIP hops. Fundamentally, the industry failed to move fast enough—and the installed base is now at risk.
 
-[youtube](https://www.youtube.com/watch?v=EtNagNezo8w) — Agents switching from english to ggwave, video:
+How VoIP codecs affect FSK signals:
 
-[![Agents switching from english to ggwave video](https://img.youtube.com/vi/EtNagNezo8w/maxresdefault.jpg)](https://www.youtube.com/watch?v=EtNagNezo8w)
+- Compression algorithms: Most VoIP codecs (especially low-bit-rate ones like G.729 or GSM) use algorithms optimized for speech patterns. They identify and discard audio information that is not essential for human hearing, which often includes the specific frequencies and timing of FSK signals. The wideband codecs like G.711 (which offers uncompressed audio) are more compatible but still susceptible to other network issues.
+- Packet loss: VoIP operates over packet-switched networks, which are prone to packet loss. FSK-based systems (like traditional alarm signals or caller ID) usually do not have error correction mechanisms built in, so even minor packet loss can lead to data failure or synchronization errors on the receiving end.
+- Voice Activity Detection (VAD) and Discontinuous Transmission (DTX): Features like VAD, which stop transmitting data during periods of silence to save bandwidth, can interrupt the continuous stream required for FSK transmission, leading to signal failure.
 
-## Authors
-
-Contact us: contact@gbrl.ai
-
-Anton Pidkuiko: [threads](https://www.threads.net/@anton10xr), [linkedin](https://www.linkedin.com/in/anton-pidkuiko-7535409b), [github](https://github.com/anton10xr)
-
-Boris Starkov: [X](https://x.com/ktoya_me), [linkedin](https://www.linkedin.com/in/boris-starkov/), [github](https://github.com/PennyroyalTea)
-
-based on [ggwave](https://github.com/ggerganov/ggwave) library by [Georgi Gerganov](https://github.com/ggerganov) and conversational AI by [ElevenLabs](https://try.elevenlabs.io/gibberlink)
-
-## How it works
-
-- Two independent conversational [ElevenLabs](https://try.elevenlabs.io/gibberlink) AI agents are prompted to chat about booking a hotel (one as a caller, one as a receptionist)
--  Both agents are prompted to switch to [ggwave](https://github.com/ggerganov/ggwave) data-over-sound protocol when they identify other side as AI, and keep speaking in english otherwise
--  This repository provides API that allows agents to use the protocol
-
-Bonus: you can open the [ggwave web demo](https://waver.ggerganov.com/), play the video above and see all the messages decoded!
-
-## Derived work
-
-- [Norman Kirchner decoding the protocol on sound level](https://www.youtube.com/watch?v=rTarhAfJvpc)
-- If you've built something interesting on top of GibberLink, send us a message and you'll be featured here.
-
-## How to repro
-https://github.com/PennyroyalTea/gibberlink/wiki/Repro-steps-for-demo
