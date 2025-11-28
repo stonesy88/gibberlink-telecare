@@ -1,0 +1,31 @@
+# Node/Next artifacts
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+out/
+**/out/
+dist/
+**/dist/
+coverage/
+**/coverage/
+.turbo/
+**/.turbo/
+
+# Env files
+.env
+.env.*
+!.env.example
+!.example.env
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor/system
+.DS_Store
+.idea/
+.vscode/
+*.swp
