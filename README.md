@@ -1,6 +1,6 @@
 # GibberLink
 
-This demo of "client/server" transmissing NOWIP ATM XMLs via ggwave
+This demo of "client/server" transmitting NOWIP ATM XMLs via ggwave
 
 ## UK telecare is broke
 
