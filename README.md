@@ -1,119 +1,114 @@
-#Why DTMF tones are failing due to BT Digital Switchover
+# Why DTMF is failing after the BT Digital Voice Switchover  
+### and why FSK is a better alternative for analogue telecare alarms
 
-#GibberLink
+## 🔗 GibberLink (ggwave Telecare Demo)
 
-This is a demo of a simple client/server chain transmitting NOWIP alarm XMLs over an audio link using ggwave (“GibberLink”) instead of legacy DTMF tones.
+A proof-of-concept client/server transport that sends **NOWIP telecare XML payloads** using **audio modulation via ggwave ("GibberLink")**, replacing brittle **DTMF alarm protocols** with a **robust FSK-style signalling layer**.
 
-#UK telecare is stuck on analogue
+This project demonstrates that *audio-FSK modem bursts survive VoIP far better than tightly timed DTMF digit sequences*, which is critical as the UK PSTN becomes fully packetised under BT Digital Voice.
 
-The UK technology enabled care (TEC) / telecare sector was built on analogue phone lines and tone-based protocols. Most legacy social alarms still use DTMF-based signalling, such as BS8521-1 and manufacturer formats like Tunstall TT92, to send alarm data from a home unit to an Alarm Receiving Centre (ARC). 
-telecare.digitaloffice.scot
-+1
+---
 
-That whole stack assumes:
+## 🚨 UK Telecare is stuck in the analogue tone era
 
-A stable, end-to-end analogue circuit (PSTN or ISDN)
+Most legacy social alarm telecare devices still depend on **DTMF alarm protocols**, originally designed for perfectly stable analogue circuits (PSTN, ISDN).
 
-Precise tone levels, durations and gaps
+Those protocols require:
 
-No packetisation, jitter or transcoding on the path
+- Fixed tone frequencies and precise levels
+- Strict tone **durations and inter-digit gaps**
+- A continuous end-to-end circuit path with **no packetisation or transcoding**
+- Extremely small payloads with minimal error tolerance
 
-But the underlying network is being ripped out from under it. The UK’s analogue PSTN will be switched off and replaced with all-IP “digital landlines” (e.g. BT Digital Voice) by January 2027. 
-bt.com
-+2
-TSA
-+2
- Millions of telecare users still rely on analogue alarms, and government and TSA (the industry body) now have a joint Telecare National Action Plan to stop vulnerable users being cut off during the switchover. 
-TSA
-+2
-GOV.UK
-+2
+The UK PSTN shutdown (January 2027) replaces analogue landlines with **packet-based Digital Voice / VoIP**, breaking all of those assumptions.
 
-The result is a huge installed base of DTMF-only devices trying to signal distress across all-IP voice networks that were never designed for this kind of timing-sensitive signalling. Failures seen in the field include:
+This leaves millions of vulnerable users relying on alarms that increasingly fail to deliver distress messages to Alarm Receiving Centres (ARCs).
 
-Alarms that “seize” the line but never deliver a valid message
+---
 
-Calls that connect to the ARC, but where Contact-ID / BS8521 tones are mangled or truncated
+## 💥 Why DTMF is so fragile on VoIP/digital voice paths
 
-Increasingly intermittent failures as providers change codecs, gateways or router firmware
+Tone-based DTMF social alarms are now unreliable because VoIP voice paths introduce distortion and timing instability. The main causes are:
 
-Fundamentally, the industry didn’t move off analogue fast enough – and those tone-only devices are now brittle on modern networks.
+### 1. **Speech-optimised audio codecs**
+- Codecs such as **G.729, GSM, AMR, and some wideband compression profiles** assume audio contains human speech
+- They reshape frequency content and remove what looks like "non-speech noise"
+- This corrupts the exact dual-tone spectral shape that DTMF digit detectors depend on
+- Mid-call transcoding (codec changes between gateways) often **mis-detects or strips digit tones entirely**
 
-Why plain DTMF is so fragile on BT Digital Voice / VoIP
+### 2. **Jitter and variable delay**
+- DTMF protocols for telecare depend on **exact timing**
+- Jitter or delay variation clips tones or shortens gaps between digits
+- Losing one tone burst = losing one digit = invalid or failed alarm message
 
-DTMF in telecare isn’t just “pressing digits”; it’s a full protocol built from tightly timed tone bursts. BS8521-1 and similar DTMF-based protocols are typically half-duplex and rely on very narrow margins for tone timing and inter-digit gaps. 
-NICC Standards
-+1
+### 3. **Echo cancellation, AGC, VAD/DTX**
+- **Echo cancellers** misinterpret long tone bursts as feedback/noise
+- **Automatic Gain Control (AGC)** alters levels during tone sequences
+- **Voice Activity Detection (VAD)** disables transmission during perceived silence
+- **Discontinuous Transmission (DTX)** inserts synthetic comfort noise instead of true audio
+- Telecare alarm tone streams rely on the "quiet parts" for framing—if those are gated, the protocol breaks
 
-On an all-IP voice path, several things attack those assumptions:
+---
 
-Speech-optimised codecs
-Low-bit-rate codecs (G.729, GSM, etc.) and some wideband profiles are tuned for human speech, not pure dual-tone signals. They reshape or discard spectral details that DTMF detectors rely on, and transcoding mid-path can distort tone frequencies or levels. 
-StarTrinity
-+1
+## ✅ Why FSK-over-audio is a stronger choice than DTMF
 
-Packet loss, jitter and variable delay
-DTMF timing is critical. Even small amounts of jitter or packet loss can clip tone starts/ends, shorten inter-digit gaps or introduce artifacts that cause the receiver to mis-detect or drop digits entirely. 
-Cisco
-+1
+FSK (*Frequency Shift Keying*) is modem-style audio signalling where **bits are encoded as shifts between two stable frequencies**. It is **much better suited to VoIP** because:
 
-Echo cancellation, AGC, VAD/DTX
-Network features like echo cancellers, automatic gain control and voice-activity detection are tuned for conversations, not machine tones. They can ramp levels, gate “silence” (i.e. quiet parts of a protocol) or mis-treat long tone sequences as noise, which is disastrous for BS8521/Contact-ID bursts.
+### 1. **Symbol recovery is continuous & timing-tolerant**
+- DTMF uses isolated digit tone bursts with strict gaps
+- FSK sends a **continuous stream of symbols**, allowing the demodulator to recover clocking over many cycles
+- Small dropouts or jitter no longer destroy framing
 
-Telecom standards bodies now explicitly list DTMF-based telecare, security and lift alarm protocols as at-risk when carried over packet networks without special handling. 
-NICC Standards
-+1
+### 2. **Supports strong error detection (CRC) and optional correction**
+- Legacy telecare DTMF has *almost no error detection at the tone layer*
+- FSK modem bursts can include:
+  - **Framing**
+  - **Checksums / CRC**
+  - **Repetition or Forward Error Correction (FEC)**
+- Provides graceful failure instead of silent mis-decode
 
-Why this project uses FSK-over-audio instead of DTMF
+### 3. **More codec-friendly than dual-tone digit bursts**
+- FSK can be tuned into **frequency bands that pass reliably through G.711 and many VoIP stacks**
+- Demodulation relies on **energy correlation over time**, not perfect spectral purity
+- Phones, laptop mics, speakers, and resampling chains already tolerate FSK modem bursts well (ggwave is designed for this)
 
-Rather than sending the alarm payload as a sequence of DTMF digits, GibberLink uses FSK-style audio modulation (via ggwave) to carry the NOWIP XML as a short, robust data burst.
+### 4. **Carry full binary payloads instead of digit-only messages**
+- DTMF was designed for 16 fixed digit symbols
+- FSK can send **arbitrary bytes**, enabling transport of:
+  - NOWIP XML
+  - Rich metadata
+  - IP addressing
+  - Device IDs
+  - Alarm telemetry
+- All transmitted in **one compact audio burst per call**
 
-FSK isn’t new – it underpins things like early telephone modems and many caller ID implementations – but it is better suited to unreliable, packetised voice paths than naked DTMF digit streams. 
-O'Reilly Media
-+1
+---
 
-Why FSK is more robust than DTMF in an all-IP world
+## 🎯 The key point
 
-1. Continuous data stream vs. fragile digit bursts
+> **DTMF telecare alarms fail because they treat a VoIP speech channel like a perfect analogue circuit.**  
+> **FSK succeeds because it was *designed for imperfect channels*, and can embed error checking and timing recovery inside the signal itself.**
 
-DTMF encodes each digit as a separate tone pair with strict min/max durations and gaps; lose or mangle one burst and you lose that digit.
+This project doesn’t claim VoIP is ideal for analogue alarms—it proves **FSK gives far more survival margin than legacy DTMF** while the sector completes its slow move to digital, IP-native telecare protocols.
 
-FSK treats the whole message as a continuous stream of symbols. Timing recovery is done over many cycles, so moderate jitter or small dropouts can be absorbed without losing framing.
+---
 
-2. Better use of redundancy and error checking
+## 📡 How VoIP affects FSK too (but less catastrophically)
 
-Classic telecare DTMF protocols largely rely on “did the sequence match or not?” with limited error detection and no retransmission inside the tone layer.
+VoIP can still disrupt FSK when conditions are extreme:
 
-An FSK modem stream can carry framing, checksums/CRCs and even repetition or FEC, so the receiver can detect and often correct bit errors instead of silently mis-decoding the alarm payload.
+- Very low-bit-rate codecs compress aggressively (e.g., G.729)
+- Packet loss is severe
+- VAD/DTX is enabled and not configured for modem passthrough
+- Endpoints insert synthetic noise instead of transmitting real audio segments
 
-3. Designed for distorted channels
+But unlike DTMF digit bursts, FSK failures are **detectable using checksums**, and the protocol **can request retries or correct bits**, preventing silent alarm corruption.
 
-Modem-style FSK demodulation correlates energy over time at known frequencies, making it more tolerant of level changes, some clipping and modest codec distortion than simple DTMF detectors which expect very clean dual tones.
+---
 
-ggwave in particular is built to survive consumer-grade audio paths (phone speakers, laptop mics), background noise and re-sampling, which is exactly the messy environment that BT Digital Voice and other VoIP paths create.
+## 🛠 Running the Demo
 
-4. Codec-friendly tone design
-
-DTMF uses a fixed set of 16 tone pairs defined decades ago; you’re stuck with those exact frequencies and levels.
-
-An FSK scheme can be tuned to use frequency bands and symbol rates that are known to pass reasonably well through G.711 and many modern voice chains, improving end-to-end survivability even when the network isn’t “data-aware”.
-
-5. More payload per call
-
-Telecare DTMF protocols were designed for very small messages; they become unwieldy once you need richer metadata or IP-style addressing.
-
-FSK can carry arbitrary bytes, so you can embed full NOWIP/SCAIP-style payloads in one shot instead of stretching DTMF to breaking point. 
-appello.co.uk
-+1
-
-But VoIP can still hurt any analogue signal
-
-Even with FSK, the VoIP path can still damage the signal if:
-
-Aggressive low-bit-rate codecs (e.g. G.729, heavily compressed mobile profiles) are used
-
-VAD/DTX chops up what looks like “non-speech”
-
-Packet loss is severe
-
-This demo doesn’t magically make analogue perfectly safe – it shows that an FSK-based audio modem (ggwave) is significantly more tolerant than legacy DTMF telecare signalling, buying resilience and headroom while the sector completes its migration to fully digital, IP-native protocols.
+### Sender
+```sh
+# Generate an audio FSK modem burst carrying demo NOWIP XML
+node sender.js my_telecare_payload.xml
